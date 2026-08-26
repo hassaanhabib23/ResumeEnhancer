@@ -2,46 +2,20 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
 import type { ResumeData, ReorderableSection } from './types'
 import { dateRange } from './format'
 import { groupSkillsByCategory } from '../components/templates/shared'
+import { parseRichRuns } from './richText'
+import { exportSectionOrder } from './resumeOutline'
 
-const DEFAULT_ORDER: ReorderableSection[] = [
-  'summary',
-  'experience',
-  'education',
-  'skills',
-  'projects',
-  'certifications',
-  'languages',
-]
-
-// Walks a sanitized rich-text fragment (bold/italic/underline only — see
+// Converts a sanitized rich-text fragment (bold/italic/underline only — see
 // lib/richText.ts) into docx TextRuns, so formatting applied in the builder
 // carries over into the Word export instead of being flattened to plain text.
 function runsFromRichText(html: string): TextRun[] {
-  const template = document.createElement('template')
-  template.innerHTML = html
-  const runs: TextRun[] = []
-
-  function walk(node: Node, bold: boolean, italics: boolean, underline: boolean) {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType === Node.TEXT_NODE) {
-        const text = child.textContent
-        if (text) runs.push(new TextRun({ text, bold, italics, underline: underline ? {} : undefined }))
-      } else if (child.nodeType === Node.ELEMENT_NODE) {
-        const el = child as HTMLElement
-        if (el.tagName === 'BR') {
-          runs.push(new TextRun({ text: '', break: 1 }))
-          continue
-        }
-        const isBold = bold || el.tagName === 'B' || el.tagName === 'STRONG'
-        const isItalic = italics || el.tagName === 'I' || el.tagName === 'EM'
-        const isUnderline = underline || el.tagName === 'U'
-        walk(el, isBold, isItalic, isUnderline)
-      }
-    }
-  }
-
-  walk(template.content, false, false, false)
-  return runs.length ? runs : [new TextRun('')]
+  const runs = parseRichRuns(html)
+  if (!runs.length) return [new TextRun('')]
+  return runs.map((r) =>
+    r.text === '\n'
+      ? new TextRun({ text: '', break: 1 })
+      : new TextRun({ text: r.text, bold: r.bold, italics: r.italic, underline: r.underline ? {} : undefined }),
+  )
 }
 
 function heading(text: string): Paragraph {
@@ -57,26 +31,6 @@ function contactLine(data: ResumeData): string {
   return [contact.email, contact.phone, contact.location, contact.website, contact.linkedin, contact.github]
     .filter(Boolean)
     .join('  ·  ')
-}
-
-function orderedSections(data: ResumeData): ReorderableSection[] {
-  const chosen = data.sectionOrder ?? DEFAULT_ORDER
-  const hidden = new Set(data.hiddenSections ?? [])
-  const seen = new Set<ReorderableSection>()
-  const result: ReorderableSection[] = []
-  for (const s of chosen) {
-    if (!seen.has(s) && !hidden.has(s)) {
-      result.push(s)
-      seen.add(s)
-    }
-  }
-  for (const s of DEFAULT_ORDER) {
-    if (!seen.has(s) && !hidden.has(s)) {
-      result.push(s)
-      seen.add(s)
-    }
-  }
-  return result
 }
 
 function sectionParagraphs(data: ResumeData, section: ReorderableSection): Paragraph[] {
@@ -212,7 +166,7 @@ export async function exportResumeToDocx(data: ResumeData, fileName: string) {
     )
   }
 
-  for (const section of orderedSections(data)) {
+  for (const section of exportSectionOrder(data)) {
     children.push(...sectionParagraphs(data, section))
   }
 

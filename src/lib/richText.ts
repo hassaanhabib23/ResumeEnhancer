@@ -43,3 +43,43 @@ export function plainTextOf(html: string): string {
   template.innerHTML = html
   return (template.content.textContent || '').trim()
 }
+
+export interface RichRun {
+  text: string
+  bold: boolean
+  italic: boolean
+  underline: boolean
+}
+
+// Walks a sanitized rich-text fragment into a flat list of styled runs —
+// the generic representation both the DOCX and real-text-PDF exporters
+// build on, so this HTML-walking logic (and its handling of <br> as a line
+// break, encoded as a run whose text is exactly "\n") lives in one place.
+export function parseRichRuns(html: string): RichRun[] {
+  const template = document.createElement('template')
+  template.innerHTML = html
+  const runs: RichRun[] = []
+
+  function walk(node: Node, bold: boolean, italic: boolean, underline: boolean) {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        if (child.textContent) runs.push({ text: child.textContent, bold, italic, underline })
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as HTMLElement
+        if (el.tagName === 'BR') {
+          runs.push({ text: '\n', bold, italic, underline })
+          continue
+        }
+        walk(
+          el,
+          bold || el.tagName === 'B' || el.tagName === 'STRONG',
+          italic || el.tagName === 'I' || el.tagName === 'EM',
+          underline || el.tagName === 'U',
+        )
+      }
+    }
+  }
+
+  walk(template.content, false, false, false)
+  return runs
+}

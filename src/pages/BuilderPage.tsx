@@ -11,6 +11,7 @@ import ResumeScorePanel from '../components/builder/ResumeScorePanel'
 import SectionOrderPanel from '../components/builder/SectionOrderPanel'
 import DownloadMenu from '../components/builder/DownloadMenu'
 import { exportResumeToPdf } from '../lib/pdf'
+import { exportResumeToTextPdf } from '../lib/pdfText'
 import { exportResumeToDocx } from '../lib/docx'
 import { computeResumeScore } from '../lib/resumeScore'
 
@@ -96,6 +97,18 @@ export default function BuilderPage() {
     }
   }
 
+  async function handleExportTextPdf() {
+    setExporting(true)
+    try {
+      await exportResumeToTextPdf(resume!, `${resume!.contact.fullName || resume!.name}`)
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong exporting your PDF. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   async function handleExportDocx() {
     setExporting(true)
     try {
@@ -163,6 +176,7 @@ export default function BuilderPage() {
           </Button>
           <DownloadMenu
             onDownloadPdf={handleExportPdf}
+            onDownloadTextPdf={handleExportTextPdf}
             onDownloadDocx={handleExportDocx}
             busy={exporting}
           />
@@ -226,6 +240,7 @@ export default function BuilderPage() {
               ) : (
                 <DownloadMenu
                   onDownloadPdf={handleExportPdf}
+                  onDownloadTextPdf={handleExportTextPdf}
                   onDownloadDocx={handleExportDocx}
                   busy={exporting}
                   label="Finish & download"

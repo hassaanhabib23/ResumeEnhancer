@@ -10,7 +10,7 @@ import PreviewPane from '../components/builder/PreviewPane'
 import ResumeScorePanel from '../components/builder/ResumeScorePanel'
 import SectionOrderPanel from '../components/builder/SectionOrderPanel'
 import DownloadMenu from '../components/builder/DownloadMenu'
-import { exportResumeToPdf } from '../lib/pdf'
+import { exportResumeToServerPdf } from '../lib/pdfServer'
 import { exportResumeToTextPdf } from '../lib/pdfText'
 import { exportResumeToDocx } from '../lib/docx'
 import { computeResumeScore } from '../lib/resumeScore'
@@ -88,7 +88,7 @@ export default function BuilderPage() {
   async function handleExportPdf() {
     setExporting(true)
     try {
-      await exportResumeToPdf('resume-page', `${resume!.contact.fullName || resume!.name}`)
+      await exportResumeToServerPdf(`${resume!.contact.fullName || resume!.name}`)
     } catch (err) {
       console.error(err)
       alert('Something went wrong exporting your PDF. Please try again.')

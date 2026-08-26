@@ -30,7 +30,7 @@ export default function DownloadMenu({
     {
       icon: '📄',
       label: 'Download as PDF',
-      hint: 'Matches your chosen template exactly',
+      hint: 'Matches your chosen template exactly, with real selectable text',
       onClick: onDownloadPdf,
     },
     {

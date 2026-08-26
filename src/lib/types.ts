@@ -217,6 +217,10 @@ export interface ResumeData {
   // Undefined = "use each template's own default order". See templates/shared.tsx
   // `orderedSections()` for how this is applied within a template's zones.
   sectionOrder?: ReorderableSection[]
+  // Sections explicitly hidden from the rendered/exported resume (still
+  // editable in the builder — the data isn't deleted, just not shown).
+  // Undefined/empty = nothing hidden, so existing resumes are unaffected.
+  hiddenSections?: ReorderableSection[]
 }
 
 export const SECTION_KEYS = [

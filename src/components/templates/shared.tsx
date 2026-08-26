@@ -77,10 +77,11 @@ export function orderedSections(
 ): ReorderableSection[] {
   const chosen = data.sectionOrder ?? templateDefaultOrder
   const zoneSet = new Set(zoneSections)
+  const hidden = new Set(data.hiddenSections ?? [])
   const seen = new Set<ReorderableSection>()
   const result: ReorderableSection[] = []
   for (const s of chosen) {
-    if (zoneSet.has(s) && !seen.has(s)) {
+    if (zoneSet.has(s) && !seen.has(s) && !hidden.has(s)) {
       result.push(s)
       seen.add(s)
     }
@@ -89,7 +90,7 @@ export function orderedSections(
   // older saved resume with a partial/corrupt sectionOrder), append it in
   // the template's own default relative position rather than dropping it.
   for (const s of templateDefaultOrder) {
-    if (zoneSet.has(s) && !seen.has(s)) {
+    if (zoneSet.has(s) && !seen.has(s) && !hidden.has(s)) {
       result.push(s)
       seen.add(s)
     }

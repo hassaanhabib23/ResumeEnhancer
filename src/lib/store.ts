@@ -39,6 +39,7 @@ interface ResumeStore {
   ) => void
   importResume: (patch: Partial<ResumeData>, name?: string) => string
   reorderSections: (id: string, order: ReorderableSection[] | undefined) => void
+  toggleSectionVisibility: (id: string, section: ReorderableSection) => void
 
   addExperience: (id: string) => void
   updateExperience: (id: string, expId: string, patch: Partial<ExperienceItem>) => void
@@ -146,6 +147,16 @@ export const useResumeStore = create<ResumeStore>()(
         set((s) => mapResume(s, id, (r) => ({ ...r, ...combo }))),
       reorderSections: (id, order) =>
         set((s) => mapResume(s, id, (r) => ({ ...r, sectionOrder: order }))),
+      toggleSectionVisibility: (id, section) =>
+        set((s) =>
+          mapResume(s, id, (r) => {
+            const hidden = r.hiddenSections ?? []
+            const next = hidden.includes(section)
+              ? hidden.filter((s2) => s2 !== section)
+              : [...hidden, section]
+            return { ...r, hiddenSections: next }
+          }),
+        ),
 
       addExperience: (id) =>
         set((s) =>

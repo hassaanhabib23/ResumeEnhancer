@@ -91,8 +91,24 @@ export default function ExperienceForm({ resume }: { resume: ResumeData }) {
               <span className="text-sm font-medium text-ink-800">Highlights</span>
               {exp.bullets.map((b, i) => {
                 const tip = bulletTip(b)
+                const insertAt = (at: number) => {
+                  const bullets = [...exp.bullets]
+                  bullets.splice(at, 0, '')
+                  updateExperience(resume.id, exp.id, { bullets })
+                }
                 return (
                   <div key={i}>
+                    <button
+                      type="button"
+                      onClick={() => insertAt(i)}
+                      className="group flex w-full items-center gap-2 py-0.5 text-ink-300 hover:text-brand-600"
+                    >
+                      <span className="h-px flex-1 bg-ink-100 group-hover:bg-brand-200" />
+                      <span className="text-[11px] font-medium opacity-0 group-hover:opacity-100">
+                        + Insert bullet
+                      </span>
+                      <span className="h-px flex-1 bg-ink-100 group-hover:bg-brand-200" />
+                    </button>
                     <div className="flex items-start gap-2">
                       <TextArea
                         rows={2}

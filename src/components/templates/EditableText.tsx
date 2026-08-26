@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { CSSProperties, ElementType } from 'react'
+import { sanitizeRichText } from '../../lib/richText'
 
 // A click-to-edit text node used directly inside the resume preview — the
 // "edit on the canvas" pattern real resume builders (Enhancv, Zety, etc.)
@@ -24,6 +25,7 @@ export default function EditableText({
   placeholder = '',
   multiline = false,
   editable = true,
+  rich = false,
   as = 'span',
   className,
   style,
@@ -32,6 +34,11 @@ export default function EditableText({
   onCommit: (next: string) => void
   placeholder?: string
   multiline?: boolean
+  // Rich fields store a small sanitized HTML fragment (bold/italic/underline
+  // only — see lib/richText.ts) instead of plain text. The browser's native
+  // Ctrl/Cmd+B/I/U handling for contentEditable applies the formatting; we
+  // just need to sync via innerHTML instead of textContent so it survives.
+  rich?: boolean
   editable?: boolean
   as?: ElementType
   className?: string
@@ -45,10 +52,23 @@ export default function EditableText({
     const node = ref.current
     if (!node || focused.current) return
     const shown = value || placeholder
-    if (node.textContent !== shown) node.textContent = shown
-  }, [value, placeholder])
+    if (rich) {
+      if (node.innerHTML !== shown) node.innerHTML = shown
+    } else if (node.textContent !== shown) {
+      node.textContent = shown
+    }
+  }, [value, placeholder, rich])
 
   if (!editable) {
+    if (rich) {
+      return (
+        <Tag
+          className={className}
+          style={style}
+          dangerouslySetInnerHTML={{ __html: value || placeholder }}
+        />
+      )
+    }
     return (
       <Tag className={className} style={style}>
         {value || placeholder}
@@ -56,38 +76,55 @@ export default function EditableText({
     )
   }
 
-  return (
-    <Tag
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      data-placeholder={placeholder}
-      className={`editable-field${className ? ` ${className}` : ''}`}
-      style={{ outline: 'none', cursor: 'text', ...style }}
-      onFocus={(e: React.FocusEvent<HTMLElement>) => {
-        focused.current = true
-        if (!value && placeholder && e.currentTarget.textContent === placeholder) {
-          e.currentTarget.textContent = ''
-        }
-      }}
-      onBlur={(e: React.FocusEvent<HTMLElement>) => {
-        focused.current = false
+  const commonProps = {
+    ref,
+    contentEditable: true,
+    suppressContentEditableWarning: true,
+    'data-placeholder': placeholder,
+    className: `editable-field${className ? ` ${className}` : ''}`,
+    style: { outline: 'none', cursor: 'text', ...style },
+    onFocus: (e: React.FocusEvent<HTMLElement>) => {
+      focused.current = true
+      if (!value && placeholder && e.currentTarget.textContent === placeholder) {
+        e.currentTarget.textContent = ''
+      }
+    },
+    onBlur: (e: React.FocusEvent<HTMLElement>) => {
+      focused.current = false
+      let next: string
+      if (rich) {
+        const html = sanitizeRichText(e.currentTarget.innerHTML)
+        next = e.currentTarget.textContent?.trim() ? html : ''
+      } else {
         const text = (multiline ? e.currentTarget.innerText : e.currentTarget.textContent) || ''
-        const next = multiline ? text.replace(/\n+$/, '') : text.trim()
-        if (next !== value) onCommit(next)
-        if (!next && placeholder) e.currentTarget.textContent = placeholder
-      }}
-      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-        if (!multiline && e.key === 'Enter') {
+        next = multiline ? text.replace(/\n+$/, '') : text.trim()
+      }
+      if (next !== value) onCommit(next)
+      if (!next && placeholder) e.currentTarget.textContent = placeholder
+    },
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (!multiline && e.key === 'Enter') {
+        e.preventDefault()
+        e.currentTarget.blur()
+      }
+      if (e.key === 'Escape') {
+        e.currentTarget.blur()
+      }
+    },
+  } as const
+
+  if (rich) {
+    return (
+      <Tag
+        {...commonProps}
+        onPaste={(e: React.ClipboardEvent<HTMLElement>) => {
           e.preventDefault()
-          e.currentTarget.blur()
-        }
-        if (e.key === 'Escape') {
-          e.currentTarget.blur()
-        }
-      }}
-    >
-      {value || placeholder}
-    </Tag>
-  )
+          document.execCommand('insertText', false, e.clipboardData.getData('text/plain'))
+        }}
+        dangerouslySetInnerHTML={{ __html: value || placeholder }}
+      />
+    )
+  }
+
+  return <Tag {...commonProps}>{value || placeholder}</Tag>
 }

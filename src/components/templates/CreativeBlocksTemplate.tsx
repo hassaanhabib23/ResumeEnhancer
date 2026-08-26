@@ -91,6 +91,7 @@ export default function CreativeBlocksTemplate({
           <EditableText
             editable={editable}
             multiline
+            rich
             value={data.summary}
             placeholder="A short summary of your experience and strengths…"
             onCommit={(v) => updateSummary(data.id, v)}
@@ -147,6 +148,7 @@ export default function CreativeBlocksTemplate({
                     <EditableText
                       editable={editable}
                       multiline
+                      rich
                       value={b}
                       placeholder="Describe an accomplishment…"
                       onCommit={(v) => {
@@ -277,6 +279,7 @@ export default function CreativeBlocksTemplate({
                 <EditableText
                   editable={editable}
                   multiline
+                  rich
                   value={p.description}
                   placeholder="What did you build?"
                   onCommit={(v) => updateProject(data.id, p.id, { description: v })}

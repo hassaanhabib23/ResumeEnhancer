@@ -216,7 +216,7 @@ export default function BuilderPage() {
           </div>
         </main>
 
-        <section className="hidden min-h-0 border-l border-ink-100 lg:block">
+        <section className="hidden min-h-0 overflow-hidden border-l border-ink-100 lg:block">
           <PreviewPane data={resume} />
         </section>
       </div>

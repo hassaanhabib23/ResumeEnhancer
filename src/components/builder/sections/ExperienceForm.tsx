@@ -1,10 +1,12 @@
 import { useResumeStore } from '../../../lib/store'
 import type { ResumeData } from '../../../lib/types'
-import { Input, TextArea } from '../../ui/Field'
+import { Input } from '../../ui/Field'
+import RichTextField from '../../ui/RichTextField'
 import ItemCard from '../../ui/ItemCard'
 import AddButton from '../../ui/AddButton'
 import Button from '../../ui/Button'
 import { startsWithWeakPhrase } from '../../../lib/actionVerbs'
+import { plainTextOf } from '../../../lib/richText'
 
 function bulletTip(bullet: string): string | null {
   const text = bullet.trim()
@@ -90,7 +92,7 @@ export default function ExperienceForm({ resume }: { resume: ResumeData }) {
             <div className="space-y-2">
               <span className="text-sm font-medium text-ink-800">Highlights</span>
               {exp.bullets.map((b, i) => {
-                const tip = bulletTip(b)
+                const tip = bulletTip(plainTextOf(b))
                 const insertAt = (at: number) => {
                   const bullets = [...exp.bullets]
                   bullets.splice(at, 0, '')
@@ -110,14 +112,14 @@ export default function ExperienceForm({ resume }: { resume: ResumeData }) {
                       <span className="h-px flex-1 bg-ink-100 group-hover:bg-brand-200" />
                     </button>
                     <div className="flex items-start gap-2">
-                      <TextArea
+                      <RichTextField
                         rows={2}
                         className="flex-1"
                         placeholder="Led redesign of the core dashboard, increasing task completion by 28%."
                         value={b}
-                        onChange={(e) => {
+                        onChange={(html) => {
                           const bullets = [...exp.bullets]
-                          bullets[i] = e.target.value
+                          bullets[i] = html
                           updateExperience(resume.id, exp.id, { bullets })
                         }}
                       />

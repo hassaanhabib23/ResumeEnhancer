@@ -1,6 +1,7 @@
 import { useResumeStore } from '../../../lib/store'
 import type { ResumeData } from '../../../lib/types'
-import { TextArea } from '../../ui/Field'
+import { plainTextOf } from '../../../lib/richText'
+import RichTextField from '../../ui/RichTextField'
 
 export default function SummaryForm({ resume }: { resume: ResumeData }) {
   const updateSummary = useResumeStore((s) => s.updateSummary)
@@ -14,13 +15,13 @@ export default function SummaryForm({ resume }: { resume: ResumeData }) {
           achievement. Lead with strengths relevant to the role you want.
         </p>
       </div>
-      <TextArea
+      <RichTextField
         rows={6}
         placeholder="Product designer with 7+ years crafting end-to-end experiences for B2B SaaS platforms..."
         value={resume.summary}
-        onChange={(e) => updateSummary(resume.id, e.target.value)}
+        onChange={(html) => updateSummary(resume.id, html)}
       />
-      <p className="text-xs text-ink-400">{resume.summary.length} characters</p>
+      <p className="text-xs text-ink-400">{plainTextOf(resume.summary).length} characters</p>
     </div>
   )
 }

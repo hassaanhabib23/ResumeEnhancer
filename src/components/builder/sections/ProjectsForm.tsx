@@ -1,6 +1,7 @@
 import { useResumeStore } from '../../../lib/store'
 import type { ResumeData } from '../../../lib/types'
-import { Input, TextArea } from '../../ui/Field'
+import { Input } from '../../ui/Field'
+import RichTextField from '../../ui/RichTextField'
 import ItemCard from '../../ui/ItemCard'
 import AddButton from '../../ui/AddButton'
 
@@ -29,13 +30,15 @@ export default function ProjectsForm({ resume }: { resume: ResumeData }) {
               value={p.name}
               onChange={(e) => updateProject(resume.id, p.id, { name: e.target.value })}
             />
-            <TextArea
-              label="Description"
-              rows={2}
-              placeholder="What did you build, and what was the impact?"
-              value={p.description}
-              onChange={(e) => updateProject(resume.id, p.id, { description: e.target.value })}
-            />
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-ink-800">Description</span>
+              <RichTextField
+                rows={2}
+                placeholder="What did you build, and what was the impact?"
+                value={p.description}
+                onChange={(html) => updateProject(resume.id, p.id, { description: html })}
+              />
+            </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
                 label="Link (optional)"

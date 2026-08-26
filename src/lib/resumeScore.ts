@@ -8,6 +8,7 @@
 
 import type { ResumeData } from './types'
 import { startsWithWeakPhrase } from './actionVerbs'
+import { plainTextOf } from './richText'
 
 export interface ScoreCheck {
   id: string
@@ -35,7 +36,11 @@ function gradeFor(score: number): string {
 
 export function computeResumeScore(data: ResumeData): ResumeScoreResult {
   const checks: ScoreCheck[] = []
-  const allBullets = data.experience.flatMap((e) => e.bullets.filter(Boolean))
+  // Summary/bullets may contain sanitized bold/italic/underline HTML (see
+  // lib/richText.ts) — scoring cares about the actual words, not the markup.
+  const allBullets = data.experience.flatMap((e) =>
+    e.bullets.map(plainTextOf).filter(Boolean),
+  )
 
   // 1. Contact completeness — 10 pts
   {
@@ -76,7 +81,7 @@ export function computeResumeScore(data: ResumeData): ResumeScoreResult {
   // 3. Summary — 10 pts
   {
     const weight = 10
-    const len = data.summary.trim().length
+    const len = plainTextOf(data.summary).length
     const status = len >= 60 && len <= 600 ? 'pass' : len > 0 ? 'warn' : 'fail'
     checks.push({
       id: 'summary',
@@ -114,7 +119,9 @@ export function computeResumeScore(data: ResumeData): ResumeScoreResult {
   // 5. Bullets per role — 10 pts
   {
     const weight = 10
-    const rolesWithFew = data.experience.filter((e) => e.bullets.filter(Boolean).length < 2)
+    const rolesWithFew = data.experience.filter(
+      (e) => e.bullets.map(plainTextOf).filter(Boolean).length < 2,
+    )
     const status =
       data.experience.length === 0
         ? 'warn'

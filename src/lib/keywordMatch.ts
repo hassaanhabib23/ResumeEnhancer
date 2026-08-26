@@ -8,6 +8,7 @@
 // for actually reading the job posting.
 
 import type { ResumeData } from './types'
+import { plainTextOf } from './richText'
 
 const STOPWORDS = new Set([
   'the', 'and', 'a', 'an', 'to', 'of', 'in', 'on', 'for', 'with', 'is', 'are',
@@ -57,11 +58,11 @@ export function extractKeywords(jobText: string, max = 24): string[] {
 export function resumeSearchText(data: ResumeData): string {
   return [
     data.contact.title,
-    data.summary,
+    plainTextOf(data.summary),
     ...data.skills.map((s) => s.name),
-    ...data.experience.flatMap((e) => [e.role, e.company, ...e.bullets]),
+    ...data.experience.flatMap((e) => [e.role, e.company, ...e.bullets.map(plainTextOf)]),
     ...data.education.map((e) => `${e.degree} ${e.field} ${e.school}`),
-    ...data.projects.map((p) => `${p.name} ${p.description} ${p.tech}`),
+    ...data.projects.map((p) => `${p.name} ${plainTextOf(p.description)} ${p.tech}`),
     ...data.certifications.map((c) => c.name),
   ]
     .filter(Boolean)

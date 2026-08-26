@@ -3,13 +3,11 @@ import Button from '../ui/Button'
 
 export default function DownloadMenu({
   onDownloadPdf,
-  onDownloadTextPdf,
   onDownloadDocx,
   busy = false,
   label = 'Download',
 }: {
   onDownloadPdf: () => void
-  onDownloadTextPdf: () => void
   onDownloadDocx: () => void
   busy?: boolean
   label?: string
@@ -32,12 +30,6 @@ export default function DownloadMenu({
       label: 'Download as PDF',
       hint: 'Matches your chosen template exactly, with real selectable text',
       onClick: onDownloadPdf,
-    },
-    {
-      icon: '🔎',
-      label: 'Download as PDF (ATS text)',
-      hint: 'Selectable, ATS-friendly plain text — one universal layout',
-      onClick: onDownloadTextPdf,
     },
     {
       icon: '📝',

@@ -9,7 +9,9 @@ import TemplateSwitcher from '../components/builder/TemplateSwitcher'
 import PreviewPane from '../components/builder/PreviewPane'
 import ResumeScorePanel from '../components/builder/ResumeScorePanel'
 import SectionOrderPanel from '../components/builder/SectionOrderPanel'
+import DownloadMenu from '../components/builder/DownloadMenu'
 import { exportResumeToPdf } from '../lib/pdf'
+import { exportResumeToDocx } from '../lib/docx'
 import { computeResumeScore } from '../lib/resumeScore'
 
 import ContactForm from '../components/builder/sections/ContactForm'
@@ -82,13 +84,25 @@ export default function BuilderPage() {
     )
   }
 
-  async function handleExport() {
+  async function handleExportPdf() {
     setExporting(true)
     try {
       await exportResumeToPdf('resume-page', `${resume!.contact.fullName || resume!.name}`)
     } catch (err) {
       console.error(err)
       alert('Something went wrong exporting your PDF. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  async function handleExportDocx() {
+    setExporting(true)
+    try {
+      await exportResumeToDocx(resume!, `${resume!.contact.fullName || resume!.name}`)
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong exporting your Word document. Please try again.')
     } finally {
       setExporting(false)
     }
@@ -147,9 +161,11 @@ export default function BuilderPage() {
           <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
             Save &amp; exit
           </Button>
-          <Button size="sm" onClick={handleExport} disabled={exporting}>
-            {exporting ? 'Preparing PDF…' : 'Download PDF'}
-          </Button>
+          <DownloadMenu
+            onDownloadPdf={handleExportPdf}
+            onDownloadDocx={handleExportDocx}
+            busy={exporting}
+          />
         </div>
       </header>
 
@@ -208,9 +224,12 @@ export default function BuilderPage() {
               {stepIndex < STEP_ORDER.length - 1 ? (
                 <Button onClick={() => setStep(STEP_ORDER[stepIndex + 1])}>Next →</Button>
               ) : (
-                <Button onClick={handleExport} disabled={exporting}>
-                  {exporting ? 'Preparing PDF…' : 'Finish & download PDF'}
-                </Button>
+                <DownloadMenu
+                  onDownloadPdf={handleExportPdf}
+                  onDownloadDocx={handleExportDocx}
+                  busy={exporting}
+                  label="Finish & download"
+                />
               )}
             </div>
           </div>

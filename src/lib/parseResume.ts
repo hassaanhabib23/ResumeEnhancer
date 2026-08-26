@@ -101,6 +101,11 @@ const PRESENT_RE = /present|current\b|now\b/i
 const MONTH_RE =
   /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?/gi
 const BULLET_PREFIX_RE = /^[•\-*◦▪·‣o]\s+/
+// A short "City, ST" / "City, Country" segment — same shape as the contact
+// header's location detector, but requiring the word after the comma to be
+// capitalized (a place name) so it doesn't false-positive on ordinary bullet
+// sentences that happen to contain a comma (e.g. "..., exceeding targets").
+const LOCATION_RE = /,\s*[A-Z]{2}\b|,\s*[A-Z][a-z]+$/
 
 // Strips date-range tokens (years, "Present"/"Current", month names) out of
 // a line, leaving whatever role/company/title text is left. Used both to
@@ -286,7 +291,16 @@ function parseExperienceSection(lines: string[]): ExperienceItem[] {
       const { startDate, endDate, current: isCurrent } = extractDateRange(line)
       // "Role at Company | Jan 2020 - Present" style — best-effort split.
       const withoutDates = stripDateTokens(line).trim()
-      const parts = withoutDates.split(/\s*[|•·—-]\s*/).filter(Boolean)
+      const allParts = withoutDates.split(/\s*[|•·—-]\s*/).filter(Boolean)
+      // Pull a location-shaped segment (e.g. "City, ST") out of the
+      // separator-delimited parts before splitting the rest into role/company,
+      // so it doesn't get mistaken for the company name.
+      let headerLocation = ''
+      const parts: string[] = []
+      for (const p of allParts) {
+        if (!headerLocation && LOCATION_RE.test(p)) headerLocation = p
+        else parts.push(p)
+      }
 
       // Some resumes put "Role, Company" on one line and the date range on
       // the very next line by itself (common with right-aligned dates that
@@ -326,8 +340,18 @@ function parseExperienceSection(lines: string[]): ExperienceItem[] {
         current.role = parts[0]
         current.company = parts[1]
       } else if (parts.length === 1) {
-        current.role = parts[0]
+        // No pipe/dash separator survived — still try "Role, Company" on a
+        // single comma-separated chunk before giving up and dumping it all
+        // into role.
+        const commaSplit = parts[0].split(/,\s*/).filter(Boolean)
+        if (commaSplit.length >= 2) {
+          current.role = commaSplit[0].trim()
+          current.company = commaSplit.slice(1).join(', ').trim()
+        } else {
+          current.role = parts[0]
+        }
       }
+      if (headerLocation) current.location = headerLocation
       continue
     }
 
@@ -351,6 +375,17 @@ function parseExperienceSection(lines: string[]): ExperienceItem[] {
     if (isBullet) {
       pendingBoundary = false
       current.bullets.push(line.replace(BULLET_PREFIX_RE, ''))
+    } else if (
+      !pendingBoundary &&
+      !current.location &&
+      current.bullets.length === 0 &&
+      line.length < 60 &&
+      LOCATION_RE.test(line)
+    ) {
+      // A "City, ST" line on its own, right after the role/company header —
+      // common when a right-aligned location column gets flattened onto its
+      // own line by PDF text extraction.
+      current.location = line.replace(/\s*[|•·—-]\s*$/, '').trim()
     } else if (!current.company && !current.role) {
       pendingBoundary = false
       const { role, company } = roleCompanyFromSingleLine(line)

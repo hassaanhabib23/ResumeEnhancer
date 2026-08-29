@@ -1,21 +1,30 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useResumeStore } from '../../../lib/store'
 import type { ResumeData } from '../../../lib/types'
+import { MAX_PHOTO_UPLOAD_BYTES, resizeImageToDataUrl } from '../../../lib/image'
 import { Input } from '../../ui/Field'
 import Button from '../../ui/Button'
 
 export default function ContactForm({ resume }: { resume: ResumeData }) {
   const updateContact = useResumeStore((s) => s.updateContact)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [photoError, setPhotoError] = useState('')
 
-  function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      updateContact(resume.id, { photo: String(reader.result) })
+    if (file.size > MAX_PHOTO_UPLOAD_BYTES) {
+      setPhotoError('That image is too large — please use one under 15MB.')
+      return
     }
-    reader.readAsDataURL(file)
+    try {
+      const photo = await resizeImageToDataUrl(file)
+      setPhotoError('')
+      updateContact(resume.id, { photo })
+    } catch {
+      setPhotoError("Couldn't process that image — please try a different file.")
+    }
   }
 
   return (
@@ -51,6 +60,7 @@ export default function ContactForm({ resume }: { resume: ResumeData }) {
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
         </div>
       </div>
+      {photoError && <p className="text-xs text-red-600">{photoError}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Input

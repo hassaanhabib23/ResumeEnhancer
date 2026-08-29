@@ -34,7 +34,7 @@ function gradeFor(score: number): string {
   return 'Just getting started'
 }
 
-export function computeResumeScore(data: ResumeData): ResumeScoreResult {
+export function computeResumeScore(data: ResumeData, pageCount?: number): ResumeScoreResult {
   const checks: ScoreCheck[] = []
   // Summary/bullets may contain sanitized bold/italic/underline HTML (see
   // lib/richText.ts) — scoring cares about the actual words, not the markup.
@@ -237,6 +237,27 @@ export function computeResumeScore(data: ResumeData): ResumeScoreResult {
           : `${tooShort} bullet${tooShort === 1 ? ' is' : 's are'} very short — expand with what you did and the result.`,
       weight,
       earned: allBullets.length === 0 ? 0 : tooShort === 0 ? weight : Math.round(weight * 0.4),
+    })
+  }
+
+  // 11. Resume length — 5 pts (only scored when the caller can actually
+  // measure the rendered page, since page count depends on the chosen
+  // template/font, not just the raw data).
+  if (pageCount !== undefined && pageCount > 0) {
+    const weight = 5
+    const status = pageCount === 1 ? 'pass' : pageCount === 2 ? 'warn' : 'fail'
+    checks.push({
+      id: 'length',
+      label: 'Resume length',
+      status,
+      detail:
+        pageCount === 1
+          ? 'Fits on one page — ideal for most roles.'
+          : pageCount === 2
+            ? 'Runs to 2 pages — fine with 8+ years of experience, otherwise trim to 1 page.'
+            : `Runs to ${pageCount} pages — recruiters typically expect 1-2 pages. Trim content or shorten bullets.`,
+      weight,
+      earned: status === 'pass' ? weight : status === 'warn' ? Math.round(weight * 0.6) : 0,
     })
   }
 

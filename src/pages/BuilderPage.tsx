@@ -13,6 +13,7 @@ import DownloadMenu from '../components/builder/DownloadMenu'
 import { exportResumeToServerPdf } from '../lib/pdfServer'
 import { exportResumeToDocx } from '../lib/docx'
 import { computeResumeScore } from '../lib/resumeScore'
+import { PAGE_HEIGHT } from '../components/templates/shared'
 
 import ContactForm from '../components/builder/sections/ContactForm'
 import SummaryForm from '../components/builder/sections/SummaryForm'
@@ -48,6 +49,7 @@ export default function BuilderPage() {
   const [importWarnings, setImportWarnings] = useState<string[] | null>(null)
   const [scoreOpen, setScoreOpen] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
+  const [previewHeight, setPreviewHeight] = useState<number | null>(null)
 
   useEffect(() => {
     if (search.get('imported') !== '1' || !params.resumeId) return
@@ -76,7 +78,11 @@ export default function BuilderPage() {
   }, [])
 
   const resume = useMemo(() => resumes.find((r) => r.id === resumeId), [resumes, resumeId])
-  const score = useMemo(() => (resume ? computeResumeScore(resume).score : null), [resume])
+  const pageCount = previewHeight ? Math.ceil(previewHeight / PAGE_HEIGHT) : undefined
+  const score = useMemo(
+    () => (resume ? computeResumeScore(resume, pageCount).score : null),
+    [resume, pageCount],
+  )
 
   if (!resume) {
     return (
@@ -169,7 +175,9 @@ export default function BuilderPage() {
         </div>
       </header>
 
-      {scoreOpen && <ResumeScorePanel resume={resume} onClose={() => setScoreOpen(false)} />}
+      {scoreOpen && (
+        <ResumeScorePanel resume={resume} pageCount={pageCount} onClose={() => setScoreOpen(false)} />
+      )}
       {orderOpen && (
         <SectionOrderPanel key={resume.id} resume={resume} onClose={() => setOrderOpen(false)} />
       )}
@@ -236,7 +244,7 @@ export default function BuilderPage() {
         </main>
 
         <section className="hidden min-h-0 overflow-hidden border-l border-ink-100 lg:block">
-          <PreviewPane data={resume} />
+          <PreviewPane data={resume} onMeasuredHeight={setPreviewHeight} />
         </section>
       </div>
 
@@ -247,7 +255,7 @@ export default function BuilderPage() {
             Show live preview
           </summary>
           <div className="mt-3 h-[70vh]">
-            <PreviewPane data={resume} />
+            <PreviewPane data={resume} onMeasuredHeight={setPreviewHeight} />
           </div>
         </details>
       </div>

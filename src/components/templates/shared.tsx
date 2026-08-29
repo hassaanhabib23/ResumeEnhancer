@@ -3,6 +3,7 @@ import { THEME_COLORS } from '../../lib/theme'
 import EditableText from './EditableText'
 
 export const PAGE_WIDTH = 794 // ~A4 at 96dpi
+export const PAGE_HEIGHT = 1123 // ~A4 at 96dpi
 
 export function themeOf(data: ResumeData) {
   return THEME_COLORS[data.colorTheme]

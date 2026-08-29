@@ -45,14 +45,16 @@ type Tab = 'score' | 'keywords' | 'verbs'
 
 export default function ResumeScorePanel({
   resume,
+  pageCount,
   onClose,
 }: {
   resume: ResumeData
+  pageCount?: number
   onClose: () => void
 }) {
   const [tab, setTab] = useState<Tab>('score')
   const [jobText, setJobText] = useState('')
-  const result = useMemo(() => computeResumeScore(resume), [resume])
+  const result = useMemo(() => computeResumeScore(resume, pageCount), [resume, pageCount])
   const keywordResult = useMemo(() => {
     if (!jobText.trim()) return null
     const keywords = extractKeywords(jobText)

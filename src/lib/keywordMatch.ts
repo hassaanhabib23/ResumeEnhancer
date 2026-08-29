@@ -70,6 +70,88 @@ export function resumeSearchText(data: ResumeData): string {
     .toLowerCase()
 }
 
+// A handful of very common abbreviation/full-form pairs — without this, a
+// resume that says "JavaScript" gets marked as missing the JD keyword "js"
+// (and vice versa) even though they mean the same thing.
+const SYNONYM_GROUPS: string[][] = [
+  ['javascript', 'js'],
+  ['typescript', 'ts'],
+  ['machine learning', 'ml'],
+  ['artificial intelligence', 'ai'],
+  ['user interface', 'ui'],
+  ['user experience', 'ux'],
+  ['continuous integration', 'ci'],
+  ['continuous deployment', 'cd'],
+  ['search engine optimization', 'seo'],
+  ['search engine marketing', 'sem'],
+  ['quality assurance', 'qa'],
+  ['application programming interface', 'api'],
+  ['objective key results', 'okr'],
+  ['key performance indicator', 'kpi'],
+  ['customer relationship management', 'crm'],
+]
+
+function synonymsOf(keyword: string): string[] {
+  const group = SYNONYM_GROUPS.find((g) => g.includes(keyword))
+  return group ? group.filter((w) => w !== keyword) : []
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// Whole-word/whole-phrase match — a plain `text.includes(k)` would let a
+// short keyword like "java" match inside an unrelated word like
+// "javascript", or "art" match inside "start". Lookaround (not \b) so it
+// still works around keywords containing symbols ("c++", "c#", "node.js").
+function containsWholeWord(text: string, term: string): boolean {
+  const pattern = new RegExp(`(?<![a-z0-9])${escapeRegex(term)}(?![a-z0-9])`, 'i')
+  return pattern.test(text)
+}
+
+// Light, safe suffix stripping so "manage" / "managed" / "managing" /
+// "management" are treated as the same word — full stemming is overkill
+// (and risks false positives) for this use case. Only applied to unigrams;
+// words this short are left alone to avoid over-stemming ("as" -> "a").
+function stem(word: string): string {
+  if (word.length <= 4) return word
+  if (/ies$/.test(word)) return word.slice(0, -3) + 'y'
+  if (/ing$/.test(word) && word.length > 6) return word.slice(0, -3)
+  if (/ement$/.test(word) && word.length > 8) return word.slice(0, -5)
+  if (/ed$/.test(word) && word.length > 5) return word.slice(0, -2)
+  if (/es$/.test(word) && word.length > 5) return word.slice(0, -2)
+  if (/s$/.test(word) && !/ss$/.test(word) && word.length > 4) return word.slice(0, -1)
+  return word
+}
+
+function stemSetsOf(text: string): { unigrams: Set<string>; bigrams: Set<string> } {
+  const words = tokenize(text)
+  const unigrams = new Set(words.map(stem))
+  const bigrams = new Set<string>()
+  for (let i = 0; i < words.length - 1; i++) {
+    bigrams.add(`${stem(words[i])} ${stem(words[i + 1])}`)
+  }
+  return { unigrams, bigrams }
+}
+
+function keywordAppears(
+  keyword: string,
+  text: string,
+  stems: { unigrams: Set<string>; bigrams: Set<string> },
+): boolean {
+  const candidates = [keyword, ...synonymsOf(keyword)]
+  for (const term of candidates) {
+    if (containsWholeWord(text, term)) return true
+    const isBigram = term.includes(' ')
+    const stemmed = term
+      .split(' ')
+      .map(stem)
+      .join(' ')
+    if (isBigram ? stems.bigrams.has(stemmed) : stems.unigrams.has(stemmed)) return true
+  }
+  return false
+}
+
 export interface KeywordMatchResult {
   matched: string[]
   missing: string[]
@@ -78,10 +160,11 @@ export interface KeywordMatchResult {
 
 export function matchKeywords(keywords: string[], data: ResumeData): KeywordMatchResult {
   const text = resumeSearchText(data)
+  const stems = stemSetsOf(text)
   const matched: string[] = []
   const missing: string[] = []
   for (const k of keywords) {
-    if (text.includes(k)) matched.push(k)
+    if (keywordAppears(k, text, stems)) matched.push(k)
     else missing.push(k)
   }
   return {

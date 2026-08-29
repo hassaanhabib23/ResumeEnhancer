@@ -3,7 +3,13 @@ import type { ResumeData } from '../../lib/types'
 import TemplateRenderer from '../templates/TemplateRenderer'
 import { PAGE_WIDTH } from '../templates/shared'
 
-export default function PreviewPane({ data }: { data: ResumeData }) {
+export default function PreviewPane({
+  data,
+  onMeasuredHeight,
+}: {
+  data: ResumeData
+  onMeasuredHeight?: (heightPx: number) => void
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
@@ -25,13 +31,15 @@ export default function PreviewPane({ data }: { data: ResumeData }) {
   useEffect(() => {
     const measure = () => {
       if (innerRef.current) {
-        setPageHeight(innerRef.current.getBoundingClientRect().height / (scale || 1))
+        const height = innerRef.current.getBoundingClientRect().height / (scale || 1)
+        setPageHeight(height)
+        onMeasuredHeight?.(height)
       }
     }
     measure()
     const t = setTimeout(measure, 50)
     return () => clearTimeout(t)
-  }, [data, scale])
+  }, [data, scale, onMeasuredHeight])
 
   return (
     <div

@@ -4,11 +4,13 @@ import Button from '../ui/Button'
 export default function DownloadMenu({
   onDownloadPdf,
   onDownloadDocx,
+  onDownloadTxt,
   busy = false,
   label = 'Download',
 }: {
   onDownloadPdf: () => void
   onDownloadDocx: () => void
+  onDownloadTxt: () => void
   busy?: boolean
   label?: string
 }) {
@@ -36,6 +38,12 @@ export default function DownloadMenu({
       label: 'Download as Word (.docx)',
       hint: 'One universal layout, fully editable',
       onClick: onDownloadDocx,
+    },
+    {
+      icon: '📃',
+      label: 'Download as plain text (.txt)',
+      hint: 'For online application forms that only accept plain text',
+      onClick: onDownloadTxt,
     },
   ]
 

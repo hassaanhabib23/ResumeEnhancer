@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
 interface FieldWrapProps {
   label?: string
@@ -29,6 +29,24 @@ export function Input({ label, hint, className = '', ...rest }: InputProps) {
         className={`w-full rounded-lg border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 outline-none transition-shadow focus:border-brand-400 focus:ring-4 focus:ring-brand-100 ${className}`}
         {...rest}
       />
+    </FieldWrap>
+  )
+}
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string
+  hint?: string
+}
+
+export function Select({ label, hint, className = '', children, ...rest }: SelectProps) {
+  return (
+    <FieldWrap label={label} hint={hint}>
+      <select
+        className={`w-full rounded-lg border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none transition-shadow focus:border-brand-400 focus:ring-4 focus:ring-brand-100 ${className}`}
+        {...rest}
+      >
+        {children}
+      </select>
     </FieldWrap>
   )
 }

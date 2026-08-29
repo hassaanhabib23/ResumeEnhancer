@@ -4,6 +4,7 @@ import BuilderPage from './pages/BuilderPage'
 import DashboardPage from './pages/DashboardPage'
 import TemplatesPage from './pages/TemplatesPage'
 import ImportResumePage from './pages/ImportResumePage'
+import TrackerPage from './pages/TrackerPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/templates" element={<TemplatesPage />} />
         <Route path="/import" element={<ImportResumePage />} />
+        <Route path="/tracker" element={<TrackerPage />} />
       </Routes>
     </HashRouter>
   )

@@ -223,6 +223,40 @@ export interface ResumeData {
   hiddenSections?: ReorderableSection[]
 }
 
+// Job Application Tracker — independent of any single resume (an
+// application optionally references the resume used, via `resumeId`, but
+// keeps its own lifecycle so deleting a resume doesn't lose the tracker
+// history).
+export type ApplicationStatus = 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected'
+
+export const APPLICATION_STATUSES: ApplicationStatus[] = [
+  'saved',
+  'applied',
+  'interviewing',
+  'offer',
+  'rejected',
+]
+
+export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  saved: 'Saved',
+  applied: 'Applied',
+  interviewing: 'Interviewing',
+  offer: 'Offer',
+  rejected: 'Rejected',
+}
+
+export interface JobApplication {
+  id: string
+  company: string
+  role: string
+  status: ApplicationStatus
+  link: string
+  appliedDate: string
+  notes: string
+  resumeId?: string
+  updatedAt: string
+}
+
 export const SECTION_KEYS = [
   'contact',
   'summary',

@@ -16,6 +16,9 @@ export default function Navbar() {
           <Link to="/templates" className="hover:text-ink-900">
             Templates
           </Link>
+          <Link to="/tracker" className="hover:text-ink-900">
+            Applications
+          </Link>
           <ScrollLink targetId="how-it-works" className="hover:text-ink-900">
             How it works
           </ScrollLink>

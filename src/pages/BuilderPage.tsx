@@ -12,6 +12,7 @@ import SectionOrderPanel from '../components/builder/SectionOrderPanel'
 import DownloadMenu from '../components/builder/DownloadMenu'
 import { exportResumeToServerPdf } from '../lib/pdfServer'
 import { exportResumeToDocx } from '../lib/docx'
+import { exportResumeToTxt } from '../lib/txt'
 import { computeResumeScore } from '../lib/resumeScore'
 import { PAGE_HEIGHT } from '../components/templates/shared'
 
@@ -114,6 +115,10 @@ export default function BuilderPage() {
     }
   }
 
+  function handleExportTxt() {
+    exportResumeToTxt(resume!, `${resume!.contact.fullName || resume!.name}`)
+  }
+
   const stepIndex = STEP_ORDER.indexOf(step)
 
   return (
@@ -170,6 +175,7 @@ export default function BuilderPage() {
           <DownloadMenu
             onDownloadPdf={handleExportPdf}
             onDownloadDocx={handleExportDocx}
+            onDownloadTxt={handleExportTxt}
             busy={exporting}
           />
         </div>
@@ -234,7 +240,8 @@ export default function BuilderPage() {
               ) : (
                 <DownloadMenu
                   onDownloadPdf={handleExportPdf}
-                        onDownloadDocx={handleExportDocx}
+                  onDownloadDocx={handleExportDocx}
+                  onDownloadTxt={handleExportTxt}
                   busy={exporting}
                   label="Finish & download"
                 />
